@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# Start the two servers first:
+#   llama-server -m <chat model>  --port 8080
+#   llama-server -m <embed model> --port 8081 --embeddings --pooling mean
+
 from pathlib import Path
 
 import chromadb
