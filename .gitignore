@@ -156,4 +156,4 @@ AGENTS.local.md
 
 # ChromaDB test store
 
-/chroma_test_db/
+/scripts/chroma_test_db/

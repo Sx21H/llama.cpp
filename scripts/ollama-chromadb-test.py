@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 
+from pathlib import Path
+
 import chromadb
 import requests
 
 OLLAMA_HOST = "http://localhost:11434"
 LLM_MODEL = "llama3.2"
 EMBED_MODEL = "nomic-embed-text"
-CHROMA_PATH = "./chroma_test_db"
+CHROMA_PATH = Path(__file__).resolve().parent / "chroma_test_db"
 
 
 def test_ollama_pipeline():
@@ -45,7 +47,7 @@ def test_ollama_pipeline():
 
     # 3. Test ChromaDB Ingestion & Query
     print("3. Testing ChromaDB integration...")
-    client = chromadb.PersistentClient(path=CHROMA_PATH)
+    client = chromadb.PersistentClient(path=str(CHROMA_PATH))
     collection = client.get_or_create_collection(
         name="test_vault",
         metadata={"hnsw:space": "cosine"}
