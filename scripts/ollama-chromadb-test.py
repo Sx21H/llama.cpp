@@ -6,6 +6,7 @@ import requests
 OLLAMA_HOST = "http://localhost:11434"
 LLM_MODEL = "llama3.2"
 EMBED_MODEL = "nomic-embed-text"
+CHROMA_PATH = "./chroma_test_db"
 
 
 def test_ollama_pipeline():
@@ -44,13 +45,14 @@ def test_ollama_pipeline():
 
     # 3. Test ChromaDB Ingestion & Query
     print("3. Testing ChromaDB integration...")
-    client = chromadb.Client()
+    client = chromadb.PersistentClient(path=CHROMA_PATH)
     collection = client.get_or_create_collection(
         name="test_vault",
         metadata={"hnsw:space": "cosine"}
     )
 
-    collection.add(
+    # upsert so re-runs refresh doc_1 instead of being dropped as a duplicate
+    collection.upsert(
         ids=["doc_1"],
         embeddings=[embedding],
         documents=["Ella agent test document."],
