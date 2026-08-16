@@ -5,19 +5,19 @@ from pathlib import Path
 import chromadb
 import requests
 
-OLLAMA_HOST = "http://localhost:11434"
-LLM_MODEL = "llama3.2"
-EMBED_MODEL = "nomic-embed-text"
+# llama-server serves one model per process, so chat and embeddings come from
+# two instances started separately (the embedding one needs --embeddings)
+CHAT_HOST = "http://localhost:8080"
+EMBED_HOST = "http://localhost:8081"
 CHROMA_PATH = Path(__file__).resolve().parent / "chroma_test_db"
 
 
-def test_ollama_pipeline():
+def test_server_pipeline():
     # 1. Test Chat Generation
     print("1. Testing LLM chat generation...")
     chat_response = requests.post(
-        f"{OLLAMA_HOST}/api/chat",
+        f"{CHAT_HOST}/v1/chat/completions",
         json={
-            "model": LLM_MODEL,
             "messages": [{"role": "user", "content": "Ping test for agent node."}],
             "stream": False,
         },
@@ -25,14 +25,14 @@ def test_ollama_pipeline():
     )
     chat_response.raise_for_status()
     chat_data = chat_response.json()
-    print(f"   [LLM Output]: {chat_data.get('message', {}).get('content', '').strip()}")
+    content = chat_data["choices"][0]["message"]["content"]
+    print(f"   [LLM Output]: {content.strip()}")
 
-    # 2. Test Embedding Generation (/api/embed is the current Ollama standard)
+    # 2. Test Embedding Generation
     print("2. Testing embedding generation...")
     embed_response = requests.post(
-        f"{OLLAMA_HOST}/api/embed",
+        f"{EMBED_HOST}/v1/embeddings",
         json={
-            "model": EMBED_MODEL,
             "input": "Ella Neural Vault agent node grounding query.",
         },
         timeout=30,
@@ -40,9 +40,7 @@ def test_ollama_pipeline():
     embed_response.raise_for_status()
     embed_data = embed_response.json()
 
-    # /api/embed returns a list of embeddings under "embeddings"
-    embeddings = embed_data.get("embeddings", [[]])
-    embedding = embeddings[0] if embeddings else []
+    embedding = embed_data["data"][0]["embedding"]
     print(f"   [Embedding Dimension]: {len(embedding)}")
 
     # 3. Test ChromaDB Ingestion & Query
@@ -72,4 +70,4 @@ def test_ollama_pipeline():
 
 
 if __name__ == "__main__":
-    test_ollama_pipeline()
+    test_server_pipeline()
