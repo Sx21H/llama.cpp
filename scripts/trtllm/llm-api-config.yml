@@ -1,0 +1,29 @@
+# Extra LLM API options for the TensorRT-LLM chat server started by serve.sh.
+# Passed as `trtllm-serve --extra_llm_api_options`; explicit CLI flags win over
+# whatever is set here.
+
+kv_cache_config:
+  # PagedAttention: the KV cache is one pool of fixed-size blocks that requests
+  # borrow as they grow, instead of every sequence reserving max_seq_len up
+  # front. Smaller blocks waste less memory on short requests, larger ones cut
+  # bookkeeping; 32 is the TRT-LLM default.
+  tokens_per_block: 32
+
+  # Reuse blocks whose token prefix matches an earlier request. This is what
+  # makes the RAG loop cheap: same system prompt and same retrieved chunk means
+  # the prefill for that prefix is skipped. Both are on by default, kept
+  # explicit here because they are the point of running this engine.
+  enable_block_reuse: true
+  enable_partial_reuse: true
+
+  # Share of the memory left after weights and buffers that goes to the KV
+  # pool. serve.sh overrides this with $KV_CACHE_FRACTION.
+  free_gpu_memory_fraction: 0.7
+
+# Decode is launch-bound on GB10, so capture CUDA graphs and pad batches up to
+# the nearest captured size. max_batch_size should track serve.sh's
+# $MAX_BATCH_SIZE - graphs are only replayed for batches at or below it.
+cuda_graph_config:
+  mode: decode
+  enable_padding: true
+  max_batch_size: 32
